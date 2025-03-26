@@ -1,2 +1,2 @@
 # ms-automate
-Stop looking zhuolin
+Enter your MS Rewards credentials to run the automation.
