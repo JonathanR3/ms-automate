@@ -1,9 +1,9 @@
 package com.automate;
 
+import com.automate.cases.DailyActivities;
 import com.automate.cases.DesktopSearches;
 import com.automate.cases.MoreActivities;
-import com.automate.cases.DailyActivities;
-
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -14,6 +14,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.util.Collections;
 
 public class EdgeAutomate {
 
@@ -21,6 +22,9 @@ public class EdgeAutomate {
     public static WebDriverWait wait;
     public static Actions actions;
     public static String homeTab;
+
+    public static final String EDGE_USER_DATA_DIR = ""; // Include user data dir
+    public static final String EDGE_PROFILE_DIR = "Default";
 
 
     public static WebElement waitForCompletion(String element) {
@@ -33,60 +37,30 @@ public class EdgeAutomate {
     public static void initialize() {
         EdgeOptions options = new EdgeOptions();
         options.addArguments("--start-maximized");
-        options.addArguments("--guest");
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/142.0.3595.53");
+        options.addArguments("user-data-dir=" + EDGE_USER_DATA_DIR);
+        options.addArguments("profile-directory=" + EDGE_PROFILE_DIR);
+
         driver = new EdgeDriver(options);
         actions = new Actions(driver);
         wait = new WebDriverWait(driver, Duration.ofSeconds(3));
-    }
-
-    /**
-     * Log into Edge
-     */
-    public static void login() {
         driver.get("https://rewards.bing.com/");
-        try {
-            WebElement loginBanner = waitForCompletion("//*[@id=\"usernameTitle\"]");
-
-            // Log in if user is not logged in
-            if (loginBanner.isDisplayed()) {
-                WebElement username = waitForCompletion("//*[@id=\"i0116\"]");
-                username.sendKeys("");
-
-                WebElement enter = waitForCompletion("//*[@id=\"idSIButton9\"]");
-                enter.click();
-
-                WebElement password = waitForCompletion("//*[@id=\"i0118\"]");
-                password.sendKeys("");
-
-                WebElement signIn = waitForCompletion("//*[@id=\"idSIButton9\"]");
-                signIn.click();
-
-                // Fill stay signed in prompt
-                if (!driver.findElements(By.xpath("//*[@id=\"kmsiTitle\"]")).isEmpty()) {
-                    WebElement checkBox = driver.findElement(By.xpath("//*[@id=\"checkboxField\"]"));
-                    checkBox.click();
-                    WebElement yesSign = driver.findElement(By.xpath("//*[@id=\"acceptButton\"]"));
-                    yesSign.click();
-                }
-            }
-        }
-        catch (Exception e) {
-            System.out.printf("Failed to proceed: %s", e);
-        }
     }
 
     public static void main(String[] args) {
-        System.setProperty("webdriver.edge.driver", "com/automate/drivers/msedgedriver");
         initialize();
-        login();
         homeTab = driver.getWindowHandle();
         try {
             DailyActivities.runner();
             MoreActivities.runner();
-            DesktopSearches.runner();
+            DesktopSearches search = new DesktopSearches();
+            search.runner();
         }
         catch (Exception e) {
             System.out.printf("Failed to proceed: %s", e);
         }
+        driver.quit();
     }
 }
